@@ -1,0 +1,45 @@
+testLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: index.lambda_handler
+      Role: !GetAtt 
+        - importCertificateRole
+        - Arn
+      Runtime: python2.7
+      Code:
+        ZipFile:  |
+            import json
+            import boto3
+            import sys
+            import os
+            import cfnresponse
+            def lambda_handler(event, context):
+                # TODO implement
+                print('EVENT:[{}]'.format(event))
+                bucket_name=os.environ["s3bucket"]
+                html="hello world"
+                      
+                body_file=html
+                s3 = boto3.client('s3')
+                s3.put_object(
+                Bucket=bucket_name,
+                Body=body_file,
+                Key='index.html',
+                ContentType='text/html'
+                )
+                responseValue = 120
+                responseData = {}
+                responseData['Data'] = responseValue
+                cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
+            
+     
+      Timeout: 60
+  Primerinvoke:
+    Type: AWS::CloudFormation::CustomResource
+    DependsOn: 
+      - testLambda
+    Version: "1.0"
+    Properties:
+     ServiceToken: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${testLambda}
+     Handler: index.lambda_handler
+     FunctionName: !Sub ${testLambda}
